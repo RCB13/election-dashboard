@@ -1,268 +1,142 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Indian Election Analytics</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    :root{--accent:#0b6cf3;--muted:#666;--bg:#f7f9fc}
-    body{font-family:Inter,Segoe UI,Roboto,Arial; margin:0; background:var(--bg); color:#111}
-    .container{max-width:1100px;margin:24px auto;padding:20px;background:#fff;border-radius:10px;box-shadow:0 6px 22px rgba(12,23,42,.08)}
-    header{display:flex;align-items:center;gap:16px}
-    header h1{margin:0;font-size:20px}
-    .controls{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap; background:#f8f9fa; padding:15px; border-radius:8px; border:1px solid #eee;}
-    select,input{padding:8px 10px;border:1px solid #ddd;border-radius:6px;background:#fff}
-    .grid{display:grid;grid-template-columns:1fr 420px;gap:18px;margin-top:18px; align-items:flex-start;}
-    .card{background:#fff;padding:14px;border-radius:8px;border:1px solid #efefef}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th,td{padding:6px 8px;border-bottom:1px solid #f0f0f0}
-    th{background:#fafafa;text-align:left}
-    .small{font-size:12px;color:var(--muted)}
-    .charts{display:flex;flex-direction:column;gap:12px}
-    canvas{background:#fff;border-radius:6px;padding:8px}
-    .row{display:flex;gap:12px;align-items:center}
-    .kpi{display:flex;gap:10px;align-items:center; margin-left: auto;}
-    .kpi .big{font-weight:700;font-size:18px; color: var(--accent);}
-    .footer{margin-top:20px;font-size:12px;color:var(--muted)}
-    @media (max-width:920px){.grid{grid-template-columns:1fr;}}
-    .charts { height: 320px; overflow-y: hidden; }
-    canvas { height: 280px !important; width: 100% !important; }
-  </style>
-  
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Indian Election Analytics</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        /* Professional CSS Styling */
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f6f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); color: white; padding: 15px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { margin: 0; font-weight: 300; } h1 span { font-weight: 700; }
+        .container { display: flex; flex: 1; padding: 20px; gap: 20px; overflow: hidden; }
+        .graph-panel { flex: 3; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 10px; position: relative; }
+        .control-panel { flex: 1; background: white; border-radius: 8px; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        select { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd; margin-top: 5px; }
+        .loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; color: #7f8c8d; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div style="width:46px;height:46px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#4ea8ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;">GE</div>
-      <div>
-        <h1>Indian General Election Analytics</h1>
-        <div class="small">Historical trends & statistics (1962 - 2019)</div>
-      </div>
-    </header>
 
-    <div class="controls">
-      <div class="row">
-        <label class="small" style="margin-right:8px; font-weight:bold;">SELECT REGION:</label>
-        <select id="stateSelect"><option value="__all__">All India</option></select>
-      </div>
+<header>
+    <h1>INDIAN <span>ELECTION ANALYTICS</span></h1>
+</header>
 
-      <div class="kpi">
-        <div class="card" style="padding:10px 15px"><div class="small">Avg Turnout</div><div id="kTurnout" class="big">—</div></div>
-        <div class="card" style="padding:10px 15px"><div class="small">Avg Margin</div><div id="kMargin" class="big">—</div></div>
-        <div class="card" style="padding:10px 15px"><div class="small">Women Cand.</div><div id="kWomen" class="big">—</div></div>
-      </div>
+<div class="container">
+    <div class="graph-panel" id="chart">
+        <div class="loading" id="loader">Loading Data from GitHub...</div>
     </div>
 
-    <div class="grid">
-      <div>
-        <div class="card">
-          <h3 style="margin:0 0 8px 0">Region Summary</h3>
-          <div id="regionDetails" class="small">Select a state to view details.</div>
+    <div class="control-panel">
+        <div>
+            <label>📍 Select Region</label>
+            <select id="stateSelect" onchange="updateDashboard()"></select>
         </div>
-
-        <div class="card" style="margin-top:12px">
-          <h3 style="margin:0 0 8px 0">Top Landslide Victories (Highest Margins)</h3>
-          <div id="topList"></div>
+        <div>
+            <label>📊 Select Metric</label>
+            <select id="metricSelect" onchange="updateDashboard()">
+                <option value="Turnout_Percentage">Voter Turnout (%)</option>
+                <option value="Margin_Percentage">Victory Margin (%)</option>
+                <option value="N_Cand">Total Candidates</option>
+            </select>
         </div>
-      </div>
-
-      <div>
-        <div class="card charts">
-          <h3 style="margin:0 0 8px 0">Voter Turnout Trend (%)</h3>
-          <canvas id="turnoutChart"></canvas>
+        <div>
+            <label>🎨 Chart Type</label>
+            <select id="typeSelect" onchange="updateDashboard()">
+                <option value="scatter">Trend Line</option>
+                <option value="bar">Bar Chart</option>
+            </select>
         </div>
-
-        <div class="card charts">
-          <h3 style="margin:0 0 8px 0">Women Representation Trend (Count)</h3>
-          <canvas id="womenChart"></canvas>
-        </div>
-      </div>
     </div>
-
-    <div class="footer">
-      <div>Data source: <code id="dataPath"></code></div>
-      <div style="margin-top:6px">Note: This dashboard fetches data directly from your GitHub repository using JavaScript.</div>
-    </div>
-  </div>
+</div>
 
 <script>
-/*
-  ELECTION DASHBOARD (Adapted from IPL Template)
-  - Fetches All_States_GE.csv
-  - Parses using PapaParse
-  - Builds UI & Charts
-*/
+    // GLOBAL DATA VARIABLES
+    let rawData = [];
+    
+    // 1. FETCH DATA FROM CSV
+    // This looks for a file named "All_States_GE.csv" in the SAME folder/repo
+    Papa.parse("All_States_GE.csv", {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            processData(results.data);
+        }
+    });
 
-const DATA_URL = 'All_States_GE.csv'; // Must match your uploaded filename
-document.getElementById('dataPath').innerText = DATA_URL;
-
-// Global Data Store
-let rawData = [];
-
-// 1. FETCH & LOAD CSV
-Papa.parse(DATA_URL, {
-    download: true,
-    header: true,
-    dynamicTyping: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-        // Filter for major years only
+    function processData(data) {
+        // Filter for Major Elections Only
         const majorYears = [1962, 1967, 1971, 1977, 1980, 1984, 1989, 1991, 1996, 1998, 1999, 2004, 2009, 2014, 2019];
-        rawData = results.data.filter(d => majorYears.includes(d.Year) && d.Turnout_Percentage <= 105);
+        rawData = data.filter(row => majorYears.includes(row.Year));
+
+        // Populate State Dropdown
+        const states = [...new Set(rawData.map(d => d.State_Name))].sort();
+        const stateSel = document.getElementById('stateSelect');
         
-        // Build the Dashboard
-        buildUI();
-    },
-    error: function(err) {
-        console.error("CSV Error:", err);
-        document.getElementById('regionDetails').innerHTML = '<div style="color:crimson">Error loading CSV. Make sure "All_States_GE.csv" is in your GitHub repo.</div>';
+        // Add "All India" Option
+        const optAll = document.createElement('option');
+        optAll.value = "All India";
+        optAll.innerText = "All India";
+        stateSel.appendChild(optAll);
+
+        states.forEach(s => {
+            if(s) {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.innerText = s.replace(/_/g, " ");
+                stateSel.appendChild(opt);
+            }
+        });
+
+        // Hide Loader and Init
+        document.getElementById('loader').style.display = 'none';
+        updateDashboard();
     }
-});
 
-// 2. BUILD UI COMPONENTS
-function buildUI(){
-    const data = rawData;
+    function updateDashboard() {
+        const state = document.getElementById('stateSelect').value;
+        const metric = document.getElementById('metricSelect').value;
+        const type = document.getElementById('typeSelect').value;
 
-    // Populate State Dropdown
-    const states = [...new Set(data.map(d => d.State_Name))].sort();
-    const sSel = document.getElementById('stateSelect');
-    states.forEach(s => {
-        if(s){
-            const opt = document.createElement('option');
-            opt.value = s;
-            opt.innerText = s.replace(/_/g, " ");
-            sSel.appendChild(opt);
-        }
-    });
+        // Filter Data by State
+        let filteredData = (state === "All India") ? rawData : rawData.filter(d => d.State_Name === state);
 
-    // Event Listener
-    sSel.addEventListener('change', e => {
-        updateDashboard(e.target.value);
-    });
+        // Aggregate Data by Year (Mean for %, Sum for Counts)
+        const years = [...new Set(filteredData.map(d => d.Year))].sort();
+        const yValues = years.map(year => {
+            const yearRows = filteredData.filter(d => d.Year === year);
+            if (metric === 'N_Cand') {
+                return yearRows.length; // Count for candidates
+            } else {
+                // Average for Percentages
+                const sum = yearRows.reduce((a, b) => a + (b[metric] || 0), 0);
+                return (sum / yearRows.length).toFixed(1);
+            }
+        });
 
-    // Initialize with All India
-    updateDashboard('__all__');
-}
+        // Plotly Chart
+        const trace = {
+            x: years,
+            y: yValues,
+            type: type,
+            mode: 'lines+markers',
+            marker: { color: '#3498db', size: 8 },
+            line: { width: 3, shape: 'spline' }
+        };
 
-// 3. UPDATE LOGIC
-function updateDashboard(regionFilter) {
-    // Filter Data
-    const filtered = (regionFilter === '__all__') ? rawData : rawData.filter(d => d.State_Name === regionFilter);
-    
-    if(filtered.length === 0) return;
+        const layout = {
+            title: state.replace(/_/g, " ") + " - Trend Analysis",
+            xaxis: { title: 'Election Year', type: 'category' },
+            yaxis: { title: 'Value' },
+            margin: { t: 50, l: 50, r: 20, b: 50 }
+        };
 
-    // A. UPDATE KPIs
-    // 1. Avg Turnout
-    // Unique constituencies per year to avoid double counting
-    const turnoutMap = new Map();
-    filtered.forEach(d => turnoutMap.set(d.Year + "_" + d.Constituency_Name, d.Turnout_Percentage));
-    const turnoutVals = Array.from(turnoutMap.values());
-    const avgTurnout = turnoutVals.reduce((a,b)=>a+b, 0) / turnoutVals.length;
-    
-    // 2. Avg Margin (Winners only)
-    const winners = filtered.filter(d => d.Position === 1 && d.Margin_Percentage);
-    const avgMargin = winners.reduce((a,b)=>a+b.Margin_Percentage, 0) / winners.length;
-    
-    // 3. Women Count
-    const womenCount = filtered.filter(d => d.Sex === 'F').length;
-
-    document.getElementById('kTurnout').innerText = avgTurnout.toFixed(1) + '%';
-    document.getElementById('kMargin').innerText = avgMargin.toFixed(1) + '%';
-    document.getElementById('kWomen').innerText = womenCount.toLocaleString();
-
-    // B. UPDATE REGION DETAILS TEXT
-    const regionName = regionFilter === '__all__' ? "All India" : regionFilter.replace(/_/g, " ");
-    document.getElementById('regionDetails').innerHTML = `
-        <strong>${regionName}</strong><br>
-        Total Candidates Analyzed: ${filtered.length.toLocaleString()}<br>
-        Years Covered: 1962 - 2019
-    `;
-
-    // C. TOP LIST (Highest Margins)
-    const topWinners = winners.sort((a,b) => b.Margin_Percentage - a.Margin_Percentage).slice(0, 10);
-    let tableHtml = '<table><thead><tr><th>Year</th><th>Candidate</th><th>Margin</th></tr></thead><tbody>';
-    topWinners.forEach(r => {
-        tableHtml += `<tr>
-            <td>${r.Year}</td>
-            <td>${r.Candidate} <span style="color:#888; font-size:11px">(${r.Party})</span></td>
-            <td style="font-weight:bold; color:#27ae60">${r.Margin_Percentage}%</td>
-        </tr>`;
-    });
-    tableHtml += '</tbody></table>';
-    document.getElementById('topList').innerHTML = tableHtml;
-
-    // D. CHARTS
-    renderCharts(filtered);
-}
-
-// 4. CHART RENDERING
-let chart1 = null;
-let chart2 = null;
-
-function renderCharts(data) {
-    // Aggregate Data by Year
-    const years = [...new Set(data.map(d => d.Year))].sort();
-    
-    const turnoutTrend = years.map(y => {
-        const yrData = data.filter(d => d.Year === y);
-        // Unique turnout per constituency
-        const tVals = [...new Set(yrData.map(d => d.Constituency_Name + "_" + d.Turnout_Percentage))]
-                      .map(s => parseFloat(s.split("_")[1]));
-        return tVals.reduce((a,b)=>a+b,0) / tVals.length;
-    });
-
-    const womenTrend = years.map(y => {
-        return data.filter(d => d.Year === y && d.Sex === 'F').length;
-    });
-
-    // --- Chart 1: Turnout ---
-    const ctx1 = document.getElementById('turnoutChart').getContext('2d');
-    if(chart1) chart1.destroy();
-    
-    chart1 = new Chart(ctx1, {
-        type: 'line',
-        data: {
-            labels: years,
-            datasets: [{
-                label: 'Avg Turnout %',
-                data: turnoutTrend,
-                borderColor: '#0b6cf3',
-                backgroundColor: 'rgba(11,108,243,0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: false } }
-        }
-    });
-
-    // --- Chart 2: Women ---
-    const ctx2 = document.getElementById('womenChart').getContext('2d');
-    if(chart2) chart2.destroy();
-
-    chart2 = new Chart(ctx2, {
-        type: 'bar',
-        data: {
-            labels: years,
-            datasets: [{
-                label: 'Women Candidates',
-                data: womenTrend,
-                backgroundColor: '#a29bfe'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } }
-        }
-    });
-}
+        Plotly.newPlot('chart', [trace], layout, {responsive: true});
+    }
 </script>
 </body>
 </html>
