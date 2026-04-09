@@ -31,13 +31,14 @@ The dashboard provides interactive tracking for the following key electoral metr
 ## 🖥️ UI / Visual Highlights
 
 ### The Main Trends Dashboard
-> `![Trends Dashboard]](https://github.com/RCB13/election-dashboard/blob/main/front_page.png)`
-> `![Trends Dashboard](https://github.com/RCB13/election-dashboard/blob/main/front_page2.png)`
+![Trends Dashboard 1](front_page.png)
+
+![Trends Dashboard 2](front_page2.png)
 
 ### Demographic Donut Charts (Education & Profession)
-> `![Demographics profession chart](https://github.com/RCB13/election-dashboard/blob/main/prof_dist.png)`
-> `![Demographics education chart](https://github.com/RCB13/election-dashboard/blob/main/edu_dist.png)`
----
+![Demographics Profession Chart](prof_dist.png)
+
+![Demographics Education Chart](edu_dist.png)
 
 ## 🗄️ Data Source
 * **TCPD (Trivedi Centre for Political Data), Ashoka University:** The underlying dataset aggregates decades of official Election Commission of India (ECI) records.
